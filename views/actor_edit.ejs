@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Edit Actor</title>
+</head>
+<body>
+  <h1>Edit Actor</h1>
+  <form action="/actors/<%= actor.actor_id %>?_method=PATCH" method="POST">
+    <label for="first_name">First Name:</label>
+    <input type="text" id="first_name" name="first_name" value="<%= actor.first_name %>" required><br>
+    <label for="last_name">Last Name:</label>
+    <input type="text" id="last_name" name="last_name" value="<%= actor.last_name %>" required><br>
+    <label for="img_url">Image URL:</label>
+    <input type="text" id="img_url" name="img_url" value="<%= actor.img_url %>"><br>
+    <button type="submit">Update</button>
+  </form>
+</body>
+</html>

@@ -1,5 +1,4 @@
-// URLs: localhost:3000/productions, /productions/:id, /productions/sort/:field, /productions/with-movies
-//last url returns not found, unsure why, maybe something in sql database, I tried ¯\_(ツ)_/¯
+// URLs: localhost:3000/productions, /productions/:id, /productions/sort/:field, /productions/with-movies, /productions/form (for add), POST /productions, /productions/:id/edit (for edit), PATCH /productions/:id
 
 const { pool, handleError } = require('../common/daoCommon');
 const mysql = require('mysql2');
@@ -26,7 +25,7 @@ function findById(id, callback) {
   });
 }
 
-function sort(sortBy = 'name', callback) {
+function sort(sortBy = 'production', callback) {
   const query = `SELECT * FROM production ORDER BY ${mysql.escapeId(sortBy)}`;
   pool.query(query, (err, rows) => {
     if (err) {
@@ -38,6 +37,7 @@ function sort(sortBy = 'name', callback) {
   });
 }
 
+//still wip
 function getProductionsWithMovies(callback) {
   pool.query(`
     SELECT p.*, GROUP_CONCAT(m.title) AS movies
@@ -54,4 +54,26 @@ function getProductionsWithMovies(callback) {
   });
 }
 
-module.exports = { findAll, findById, sort, getProductionsWithMovies };
+function create(data, callback) {
+  pool.query('INSERT INTO production (production) VALUES (?)', [data.production], (err, result) => {
+    if (err) {
+      handleError(err);
+      callback(err, null);
+    } else {
+      callback(null, { id: result.insertId });
+    }
+  });
+}
+
+function update(id, data, callback) {
+  pool.query('UPDATE production SET production = ? WHERE production_id = ?', [data.production, id], (err, result) => {
+    if (err) {
+      handleError(err);
+      callback(err, null);
+    } else {
+      callback(null, result.affectedRows > 0);
+    }
+  });
+}
+
+module.exports = { findAll, findById, sort, getProductionsWithMovies, create, update };

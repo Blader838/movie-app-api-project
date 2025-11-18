@@ -1,5 +1,4 @@
-// URLs: localhost:3000/genres, /genres/:id, /genres/sort/:field, /genres/with-movie-count
-//last url returns not found, unsure why, maybe something in sql database, I tried ¯\_(ツ)_/¯
+// URLs: localhost:3000/genres, /genres/:id, /genres/sort/:field, /genres/with-movie-count, /genres/form (for add), POST /genres, /genres/:id/edit (for edit), PATCH /genres/:id
 
 const { pool, handleError } = require('../common/daoCommon');
 const mysql = require('mysql2');
@@ -26,7 +25,7 @@ function findById(id, callback) {
   });
 }
 
-function sort(sortBy = 'name', callback) {
+function sort(sortBy = 'genre', callback) {
   const query = `SELECT * FROM genre ORDER BY ${mysql.escapeId(sortBy)}`;
   pool.query(query, (err, rows) => {
     if (err) {
@@ -38,6 +37,7 @@ function sort(sortBy = 'name', callback) {
   });
 }
 
+//still wip
 function getGenresWithMovieCount(callback) {
   pool.query(`
     SELECT g.*, COUNT(mg.movie_id) AS movie_count
@@ -54,4 +54,26 @@ function getGenresWithMovieCount(callback) {
   });
 }
 
-module.exports = { findAll, findById, sort, getGenresWithMovieCount };
+function create(data, callback) {
+  pool.query('INSERT INTO genre (genre) VALUES (?)', [data.genre], (err, result) => {
+    if (err) {
+      handleError(err);
+      callback(err, null);
+    } else {
+      callback(null, { id: result.insertId });
+    }
+  });
+}
+
+function update(id, data, callback) {
+  pool.query('UPDATE genre SET genre = ? WHERE genre_id = ?', [data.genre, id], (err, result) => {
+    if (err) {
+      handleError(err);
+      callback(err, null);
+    } else {
+      callback(null, result.affectedRows > 0);
+    }
+  });
+}
+
+module.exports = { findAll, findById, sort, getGenresWithMovieCount, create, update };

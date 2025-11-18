@@ -1,5 +1,4 @@
-// URLs: localhost:3000/movies, /movies/:id, /movies/sort/:field, /movies/with-full-cast
-//last url returns not found, unsure why, maybe something in sql database, I tried ¯\_(ツ)_/¯
+// URLs: localhost:3000/movies, /movies/:id, /movies/sort/:field, /movies/with-full-cast, /movies/form (for add), POST /movies, /movies/:id/edit (for edit), PATCH /movies/:id
 
 const { pool, handleError } = require('../common/daoCommon');
 const mysql = require('mysql2');
@@ -26,7 +25,7 @@ function findById(id, callback) {
   });
 }
 
-function sort(sortBy = 'name', callback) {
+function sort(sortBy = 'title', callback) {
   const query = `SELECT * FROM movie ORDER BY ${mysql.escapeId(sortBy)}`;
   pool.query(query, (err, rows) => {
     if (err) {
@@ -38,11 +37,12 @@ function sort(sortBy = 'name', callback) {
   });
 }
 
+//still wip
 function getMoviesWithFullCast(callback) {
   pool.query(`
     SELECT m.*,
-      GROUP_CONCAT(DISTINCT a.first_name, ' ', a.last_name) AS actors,
-      GROUP_CONCAT(DISTINCT d.first_name, ' ', d.last_name) AS directors,
+      GROUP_CONCAT(DISTINCT CONCAT(a.first_name, ' ', a.last_name)) AS actors,
+      GROUP_CONCAT(DISTINCT CONCAT(d.first_name, ' ', d.last_name)) AS directors,
       GROUP_CONCAT(DISTINCT g.genre) AS genres
     FROM movie m
     LEFT JOIN movie_to_actor ma ON m.movie_id = ma.movie_id
@@ -62,4 +62,34 @@ function getMoviesWithFullCast(callback) {
   });
 }
 
-module.exports = { findAll, findById, sort, getMoviesWithFullCast };
+function create(data, callback) {
+  pool.query(
+    'INSERT INTO movie (title, rating, runtime, nationality, yr_released, budget, gross, production_id, showing, poster) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [data.title, data.rating, data.runtime, data.nationality, data.yr_released, data.budget, data.gross, data.production_id, data.showing, data.poster],
+    (err, result) => {
+      if (err) {
+        handleError(err);
+        callback(err, null);
+      } else {
+        callback(null, { id: result.insertId });
+      }
+    }
+  );
+}
+
+function update(id, data, callback) {
+  pool.query(
+    'UPDATE movie SET title = ?, rating = ?, runtime = ?, nationality = ?, yr_released = ?, budget = ?, gross = ?, production_id = ?, showing = ?, poster = ? WHERE movie_id = ?',
+    [data.title, data.rating, data.runtime, data.nationality, data.yr_released, data.budget, data.gross, data.production_id, data.showing, data.poster, id],
+    (err, result) => {
+      if (err) {
+        handleError(err);
+        callback(err, null);
+      } else {
+        callback(null, result.affectedRows > 0);
+      }
+    }
+  );
+}
+
+module.exports = { findAll, findById, sort, getMoviesWithFullCast, create, update };

@@ -1,5 +1,4 @@
-// URLs: localhost:3000/directors, /directors/:id, /directors/sort/:field, /directors/with-movies
-//last url returns not found, unsure why, maybe something in sql database, I tried ¯\_(ツ)_/¯
+// URLs: localhost:3000/directors, /directors/:id, /directors/sort/:field, /directors/with-movies, /directors/form (for add), POST /directors, /directors/:id/edit (for edit), PATCH /directors/:id
 
 const { pool, handleError } = require('../common/daoCommon');
 const mysql = require('mysql2');
@@ -26,7 +25,7 @@ function findById(id, callback) {
   });
 }
 
-function sort(sortBy = 'name', callback) {
+function sort(sortBy = 'last_name', callback) {
   const query = `SELECT * FROM director ORDER BY ${mysql.escapeId(sortBy)}`;
   pool.query(query, (err, rows) => {
     if (err) {
@@ -38,9 +37,10 @@ function sort(sortBy = 'name', callback) {
   });
 }
 
+//still wip
 function getDirectorsWithMovies(callback) {
   pool.query(`
-    SELECT d.*, GROUP_CONCAT(m.title) AS movies
+    SELECT d.*, CONCAT(d.first_name, ' ', d.last_name) AS full_name, GROUP_CONCAT(m.title) AS movies
     FROM director d
     LEFT JOIN movie_to_director md ON d.director_id = md.director_id
     LEFT JOIN movie m ON md.movie_id = m.movie_id
@@ -55,4 +55,26 @@ function getDirectorsWithMovies(callback) {
   });
 }
 
-module.exports = { findAll, findById, sort, getDirectorsWithMovies };
+function create(data, callback) {
+  pool.query('INSERT INTO director (first_name, last_name) VALUES (?, ?)', [data.first_name, data.last_name], (err, result) => {
+    if (err) {
+      handleError(err);
+      callback(err, null);
+    } else {
+      callback(null, { id: result.insertId });
+    }
+  });
+}
+
+function update(id, data, callback) {
+  pool.query('UPDATE director SET first_name = ?, last_name = ? WHERE director_id = ?', [data.first_name, data.last_name, id], (err, result) => {
+    if (err) {
+      handleError(err);
+      callback(err, null);
+    } else {
+      callback(null, result.affectedRows > 0);
+    }
+  });
+}
+
+module.exports = { findAll, findById, sort, getDirectorsWithMovies, create, update };

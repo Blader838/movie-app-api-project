@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Edit Production</title>
+</head>
+<body>
+  <h1>Edit Production</h1>
+  <form action="/productions/<%= production.production_id %>?_method=PATCH" method="POST">
+    <label for="production">Production:</label>
+    <input type="text" id="production" name="production" value="<%= production.production %>" required><br>
+    <button type="submit">Update</button>
+  </form>
+</body>
+</html>
